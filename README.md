@@ -1,5 +1,5 @@
 # simulatore-roi-eventi
-Se non hai voglia di fare un excel usa questo per simulare il tuo roi
+Se non hai tempo di fare un excel usa questo per simulare il tuo roi per eventi B2B
 ### 🚀 Funzionalità:
 - **Calcolo ROI & Break-even:** Analisi istantanea della redditività.
 - **Simulazione Funnel:** Trasforma gli invitati in contratti chiusi (ARR).
