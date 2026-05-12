@@ -6,7 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simulatore ROI Eventi B2B</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { darkMode: 'class' }</script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         /* Personalizzazione Slider Range */
         input[type=range] {
@@ -100,288 +102,687 @@
     </style>
 </head>
 
-<body class="bg-gray-50 text-gray-900 font-sans min-h-screen">
+<body
+    class="bg-gray-50 text-gray-900 font-sans min-h-screen dark:bg-gray-900 dark:text-gray-100 transition-colors duration-200">
 
     <!-- Intestazione -->
-    <header class="bg-white border-b border-gray-200 py-6 px-4 shadow-sm">
-        <div class="max-w-6xl mx-auto flex items-center">
-            <h1 class="text-2xl font-bold tracking-tight text-gray-900">
-                Simulatore ROI Eventi B2B
-            </h1>
+    <header
+        class="bg-white border-b border-gray-200 pt-6 px-4 shadow-sm dark:bg-gray-800 dark:border-gray-700 transition-colors duration-200">
+        <div class="max-w-6xl mx-auto flex flex-col gap-4">
+            <div class="flex justify-between items-center">
+                <h1 class="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+                    Simulatore ROI Eventi B2B
+                </h1>
+                <!-- Toggle Dark Mode -->
+                <button onclick="toggleDarkMode()"
+                    class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-500 dark:text-gray-400 focus:outline-none"
+                    title="Attiva/Disattiva Dark Mode">
+                    <!-- Icona Sole -->
+                    <svg id="theme-icon-light" class="w-6 h-6 hidden dark:block" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z">
+                        </path>
+                    </svg>
+                    <!-- Icona Luna -->
+                    <svg id="theme-icon-dark" class="w-6 h-6 block dark:hidden" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+            <!-- Navigazione a Tab -->
+            <nav class="flex gap-6 -mb-px">
+                <button id="tab-btn-simulator" onclick="switchMainTab('simulator')"
+                    class="pb-3 text-sm font-bold text-gray-900 dark:text-white border-b-4 border-emerald-500 transition-colors">
+                    Simulatore
+                </button>
+                <button id="tab-btn-scenari" onclick="switchMainTab('scenari')"
+                    class="pb-3 text-sm font-bold text-gray-500 dark:text-gray-400 border-b-4 border-transparent hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+                    Laboratorio Scenari
+                </button>
+            </nav>
         </div>
     </header>
 
-    <main class="max-w-6xl mx-auto px-4 py-8 flex flex-col lg:flex-row gap-8">
+    <main class="max-w-6xl mx-auto px-4 py-8">
+        <!-- TAB SIMULATORE -->
+        <div id="tab-simulator" class="flex flex-col lg:flex-row gap-8">
 
-        <!-- ==============================================
+            <!-- ==============================================
              SINISTRA: CONTROLLI INPUT
              ============================================== -->
-        <div
-            class="w-full lg:w-5/12 flex flex-col gap-6 bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-200 lg:sticky lg:top-4 self-start">
-            <h2 class="text-lg font-bold text-gray-800 uppercase tracking-wide border-b border-gray-100 pb-2">Parametri
-                di Ingresso</h2>
+            <div
+                class="w-full lg:w-5/12 flex flex-col gap-6 bg-white dark:bg-gray-800 p-6 md:p-8 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-200 dark:bg-gray-800 dark:border-gray-700 lg:sticky lg:top-4 self-start transition-colors duration-200">
 
-            <div class="space-y-4">
-
-                <!-- Parametro 1 -->
-                <div class="flex flex-col gap-1.5">
-                    <div class="flex justify-between items-center">
-                        <label for="input-budget" class="text-sm font-semibold text-gray-700">Budget Evento (€)</label>
-                        <input type="text" inputmode="numeric" id="input-budget" value="5.000 €"
-                            class="w-24 px-3 py-1.5 text-right text-sm font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-400 transition-shadow">
-                    </div>
-                    <input type="range" id="slider-budget" min="1000" max="15000" step="100" value="5000">
+                <div class="flex justify-between items-center border-b border-gray-100 dark:border-gray-700 pb-2">
+                    <h2 class="text-lg font-bold text-gray-800 dark:text-white uppercase tracking-wide">Parametri di
+                        Ingresso</h2>
                 </div>
 
-                <!-- Parametro 2 -->
-                <div class="flex flex-col gap-1.5">
-                    <div class="flex justify-between items-center">
-                        <label for="input-invitati" class="text-sm font-semibold text-gray-700">Invitati Totali</label>
-                        <input type="number" id="input-invitati" min="10" max="150" value="50"
-                            class="w-24 px-3 py-1.5 text-right text-sm font-bold border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-400 transition-shadow">
-                    </div>
-                    <input type="range" id="slider-invitati" min="10" max="150" step="1" value="50">
+                <!-- Tipo di Budget -->
+                <div class="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg w-full -mt-2">
+                    <button id="btn-budget-rapido" onclick="setBudgetMode('rapido')"
+                        class="flex-1 py-1.5 text-sm font-semibold rounded-md bg-white dark:bg-gray-600 shadow-sm text-gray-800 dark:text-white transition-all">Budget
+                        Rapido</button>
+                    <button id="btn-budget-dettagliato" onclick="setBudgetMode('dettagliato')"
+                        class="flex-1 py-1.5 text-sm font-semibold rounded-md text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-100 transition-all">Budget
+                        Dettagliato</button>
                 </div>
 
-                <!-- Parametro 3 -->
-                <div class="flex flex-col gap-1.5">
-                    <div class="flex justify-between items-center">
-                        <label for="input-presenza" class="text-sm font-semibold text-gray-700">Tasso di Presenza
-                            Effettiva (%)</label>
-                        <input type="number" id="input-presenza" min="10" max="100" value="80"
-                            class="w-24 px-3 py-1.5 text-right text-sm font-bold border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-400 transition-shadow">
-                    </div>
-                    <input type="range" id="slider-presenza" min="10" max="100" step="1" value="80">
-                </div>
+                <div class="space-y-4">
 
-                <!-- Parametro 4 -->
-                <div class="flex flex-col gap-1.5">
-                    <div class="flex justify-between items-center">
-                        <label for="input-demo" class="text-sm font-semibold text-gray-700">Conversione in Demo
-                            (%)</label>
-                        <input type="number" id="input-demo" min="1" max="50" value="15"
-                            class="w-24 px-3 py-1.5 text-right text-sm font-bold border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-400 transition-shadow">
+                    <!-- Container Budget Rapido -->
+                    <div id="container-budget-rapido" class="flex flex-col gap-1.5">
+                        <div class="flex justify-between items-center">
+                            <label for="input-budget"
+                                class="text-sm font-semibold text-gray-700 dark:text-gray-200">Budget Evento
+                                (€)</label>
+                            <input type="text" inputmode="numeric" id="input-budget" value="5.000 €"
+                                class="w-24 px-3 py-1.5 text-right text-sm font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100 dark:border-emerald-800 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-400 transition-shadow">
+                        </div>
+                        <input type="range" id="slider-budget" min="1000" max="15000" step="100" value="5000">
                     </div>
-                    <input type="range" id="slider-demo" min="1" max="50" step="1" value="15">
-                </div>
 
-                <!-- Parametro 5 -->
-                <div class="flex flex-col gap-1.5">
-                    <div class="flex justify-between items-center">
-                        <label for="input-chiusura" class="text-sm font-semibold text-gray-700">Tasso di Chiusura
-                            post-Demo (%)</label>
-                        <input type="number" id="input-chiusura" min="1" max="100" value="20"
-                            class="w-24 px-3 py-1.5 text-right text-sm font-bold border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-400 transition-shadow">
+                    <!-- Container Budget Dettagliato -->
+                    <div id="container-budget-dettagliato"
+                        class="hidden flex-col gap-3 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700">
+                        <div id="budget-items-list" class="flex flex-col gap-2">
+                            <!-- Dynamic items will be injected here -->
+                        </div>
+                        <button onclick="addBudgetItem()"
+                            class="text-sm font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 text-left mt-1 flex items-center gap-1 transition-colors focus:outline-none">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                            </svg>
+                            Aggiungi voce di spesa
+                        </button>
+                        <div
+                            class="flex justify-between items-center pt-3 border-t border-gray-200 dark:border-gray-700 mt-1">
+                            <span class="text-sm font-bold text-gray-800 dark:text-gray-200">Totale Budget</span>
+                            <span id="label-budget-totale"
+                                class="text-lg font-bold text-emerald-600 dark:text-emerald-400">0 €</span>
+                        </div>
                     </div>
-                    <input type="range" id="slider-chiusura" min="1" max="100" step="1" value="20">
-                </div>
 
-                <!-- Parametro 6 -->
-                <div class="flex flex-col gap-1.5">
-                    <div class="flex justify-between items-center">
-                        <label for="input-arr" class="text-sm font-semibold text-gray-700">Val. Medio Contratto (ARR in
-                            €)</label>
-                        <input type="text" inputmode="numeric" id="input-arr" value="3.000 €"
-                            class="w-24 px-3 py-1.5 text-right text-sm font-bold border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-400 transition-shadow">
+                    <!-- Parametro 2 -->
+                    <div class="flex flex-col gap-1.5">
+                        <div class="flex justify-between items-center">
+                            <label for="input-invitati"
+                                class="text-sm font-semibold text-gray-700 dark:text-gray-200">Invitati
+                                Totali</label>
+                            <input type="number" id="input-invitati" min="10" max="150" value="50"
+                                class="w-24 px-3 py-1.5 text-right text-sm font-bold border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-400 transition-shadow">
+                        </div>
+                        <input type="range" id="slider-invitati" min="10" max="150" step="1" value="50">
                     </div>
-                    <input type="range" id="slider-arr" min="1000" max="10000" step="100" value="3000">
-                </div>
 
+                    <!-- Parametro 3 -->
+                    <div class="flex flex-col gap-1.5">
+                        <div class="flex justify-between items-center">
+                            <label for="input-presenza"
+                                class="text-sm font-semibold text-gray-700 dark:text-gray-200">Tasso di Presenza
+                                Effettiva (%)</label>
+                            <input type="number" id="input-presenza" min="10" max="100" value="80"
+                                class="w-24 px-3 py-1.5 text-right text-sm font-bold border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-400 transition-shadow">
+                        </div>
+                        <input type="range" id="slider-presenza" min="10" max="100" step="1" value="80">
+                    </div>
+
+                    <!-- Parametro 4 -->
+                    <div class="flex flex-col gap-1.5">
+                        <div class="flex justify-between items-center">
+                            <label for="input-demo"
+                                class="text-sm font-semibold text-gray-700 dark:text-gray-200">Conversione in Demo
+                                (%)</label>
+                            <input type="number" id="input-demo" min="1" max="50" value="15"
+                                class="w-24 px-3 py-1.5 text-right text-sm font-bold border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-400 transition-shadow">
+                        </div>
+                        <input type="range" id="slider-demo" min="1" max="50" step="1" value="15">
+                    </div>
+
+                    <!-- Parametro 5 -->
+                    <div class="flex flex-col gap-1.5">
+                        <div class="flex justify-between items-center">
+                            <label for="input-chiusura"
+                                class="text-sm font-semibold text-gray-700 dark:text-gray-200">Tasso di Chiusura
+                                post-Demo (%)</label>
+                            <input type="number" id="input-chiusura" min="1" max="100" value="20"
+                                class="w-24 px-3 py-1.5 text-right text-sm font-bold border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-400 transition-shadow">
+                        </div>
+                        <input type="range" id="slider-chiusura" min="1" max="100" step="1" value="20">
+                    </div>
+
+                    <!-- Parametro 6 -->
+                    <div class="flex flex-col gap-1.5">
+                        <div class="flex justify-between items-center">
+                            <label for="input-arr" class="text-sm font-semibold text-gray-700 dark:text-gray-200">Val.
+                                Medio Contratto (ARR
+                                in
+                                €)</label>
+                            <input type="text" inputmode="numeric" id="input-arr" value="3.000 €"
+                                class="w-24 px-3 py-1.5 text-right text-sm font-bold border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-400 transition-shadow">
+                        </div>
+                        <input type="range" id="slider-arr" min="1000" max="10000" step="100" value="3000">
+                    </div>
+
+                    <!-- Parametro 7 -->
+                    <div class="flex flex-col gap-1.5">
+                        <div class="flex justify-between items-center">
+                            <label for="input-anni"
+                                class="text-sm font-semibold text-gray-700 dark:text-gray-200">Durata media cliente
+                                (Anni)</label>
+                            <input type="number" id="input-anni" min="1" max="10" value="3"
+                                class="w-24 px-3 py-1.5 text-right text-sm font-bold border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-400 transition-shadow">
+                        </div>
+                        <input type="range" id="slider-anni" min="1" max="10" step="1" value="3">
+                    </div>
+
+                </div>
             </div>
-        </div>
 
-        <!-- ==============================================
+            <!-- ==============================================
              DESTRA: OUTPUT DASHBOARD
              ============================================== -->
-        <div class="w-full lg:w-7/12 flex flex-col gap-5">
-            <h2 class="text-lg font-bold text-gray-800 uppercase tracking-wide mb-1">Dashboard Output</h2>
+            <div class="w-full lg:w-7/12 flex flex-col gap-5">
+                <h2 class="text-lg font-bold text-gray-800 dark:text-white uppercase tracking-wide mb-1">Dashboard
+                    Output</h2>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-                <!-- Card 1 -->
-                <div
-                    class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between hover:scale-105 transition-transform duration-300">
-                    <div class="flex items-center text-gray-500 mb-2">
-                        <span class="text-xs font-bold uppercase tracking-wider">Partecipanti & CPA</span>
-                        <div class="relative flex items-center tooltip-group cursor-help ml-2">
-                            <svg class="w-4 h-4 text-gray-400 hover:text-emerald-500 transition-colors"
-                                fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd"
-                                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z"
-                                    clip-rule="evenodd"></path>
-                            </svg>
-                            <div
-                                class="tooltip-content absolute bottom-full left-1/2 mb-2 px-3 py-2 text-xs font-medium text-white bg-gray-800 rounded-lg whitespace-nowrap z-10 shadow-lg">
-                                Budget / (Invitati * Tasso Presenza)
+                    <!-- Card 1 -->
+                    <div
+                        class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-200 flex flex-col justify-between hover:scale-105 transition-transform duration-300">
+                        <div class="flex items-center text-gray-500 dark:text-gray-400 mb-2">
+                            <span class="text-xs font-bold uppercase tracking-wider">Partecipanti & CPA</span>
+                            <div class="relative flex items-center tooltip-group cursor-help ml-2">
+                                <svg class="w-4 h-4 text-gray-400 dark:text-gray-400 hover:text-emerald-500 dark:hover:text-emerald-400 transition-colors"
+                                    fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z"
+                                        clip-rule="evenodd"></path>
+                                </svg>
                                 <div
-                                    class="absolute w-2 h-2 bg-gray-800 rotate-45 -bottom-1 left-1/2 transform -translate-x-1/2">
+                                    class="tooltip-content absolute bottom-full left-1/2 mb-2 px-3 py-2 text-xs font-medium text-white bg-gray-800 rounded-lg whitespace-nowrap z-10 shadow-lg">
+                                    Budget / (Invitati * Tasso Presenza)
+                                    <div
+                                        class="absolute w-2 h-2 bg-gray-800 rotate-45 -bottom-1 left-1/2 transform -translate-x-1/2">
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="flex justify-between items-end">
-                        <div>
-                            <div class="text-3xl font-bold text-gray-900 transition-all duration-300"
-                                id="out-partecipanti">0</div>
-                            <div class="text-[10px] text-gray-400 mt-1 uppercase font-semibold">Reali</div>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-xl font-bold text-gray-700 transition-all duration-300" id="out-cpa">0 €
+                        <div class="flex justify-between items-end">
+                            <div>
+                                <div class="text-3xl font-bold text-gray-900 dark:text-white transition-all duration-300"
+                                    id="out-partecipanti">0</div>
+                                <div class="text-[10px] text-gray-400 dark:text-gray-300 mt-1 uppercase font-semibold">
+                                    Reali</div>
                             </div>
-                            <div class="text-[10px] text-gray-400 mt-1 uppercase font-semibold">CPA</div>
+                            <div class="text-right">
+                                <div class="text-xl font-bold text-gray-700 dark:text-gray-200 transition-all duration-300"
+                                    id="out-cpa">0
+                                    €
+                                </div>
+                                <div class="text-[10px] text-gray-400 dark:text-gray-300 mt-1 uppercase font-semibold">
+                                    CPA</div>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Card 2 -->
-                <div
-                    class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between hover:scale-105 transition-transform duration-300">
-                    <div class="flex items-center text-gray-500 mb-2">
-                        <span class="text-xs font-bold uppercase tracking-wider">Demo & Pipeline</span>
-                        <div class="relative flex items-center tooltip-group cursor-help ml-2 tooltip-right-edge">
-                            <svg class="w-4 h-4 text-gray-400 hover:text-emerald-500 transition-colors"
-                                fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd"
-                                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z"
-                                    clip-rule="evenodd"></path>
-                            </svg>
-                            <div
-                                class="tooltip-content absolute bottom-full left-1/2 mb-2 px-3 py-2 text-xs font-medium text-white bg-gray-800 rounded-lg whitespace-nowrap z-10 shadow-lg">
-                                (Partecipanti * % Demo) * ARR
+                    <!-- Card 2 -->
+                    <div
+                        class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-200 flex flex-col justify-between hover:scale-105 transition-transform duration-300">
+                        <div class="flex items-center text-gray-500 dark:text-gray-400 mb-2">
+                            <span class="text-xs font-bold uppercase tracking-wider">Demo & Pipeline</span>
+                            <div class="relative flex items-center tooltip-group cursor-help ml-2 tooltip-right-edge">
+                                <svg class="w-4 h-4 text-gray-400 dark:text-gray-400 hover:text-emerald-500 dark:hover:text-emerald-400 transition-colors"
+                                    fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z"
+                                        clip-rule="evenodd"></path>
+                                </svg>
                                 <div
-                                    class="absolute w-2 h-2 bg-gray-800 rotate-45 -bottom-1 left-1/2 transform -translate-x-1/2">
+                                    class="tooltip-content absolute bottom-full left-1/2 mb-2 px-3 py-2 text-xs font-medium text-white bg-gray-800 rounded-lg whitespace-nowrap z-10 shadow-lg">
+                                    (Partecipanti * % Demo) * ARR
+                                    <div
+                                        class="absolute w-2 h-2 bg-gray-800 rotate-45 -bottom-1 left-1/2 transform -translate-x-1/2">
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="flex justify-between items-end">
-                        <div>
-                            <div class="text-3xl font-bold text-gray-900 transition-all duration-300" id="out-demo">0
+                        <div class="flex justify-between items-end">
+                            <div>
+                                <div class="text-3xl font-bold text-gray-900 dark:text-white transition-all duration-300"
+                                    id="out-demo">
+                                    0
+                                </div>
+                                <div class="text-[10px] text-gray-400 dark:text-gray-300 mt-1 uppercase font-semibold">
+                                    Generate</div>
                             </div>
-                            <div class="text-[10px] text-gray-400 mt-1 uppercase font-semibold">Generate</div>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-xl font-bold text-gray-700 transition-all duration-300" id="out-pipeline">0
-                                €</div>
-                            <div class="text-[10px] text-gray-400 mt-1 uppercase font-semibold">Tot. Pipe</div>
+                            <div class="text-right">
+                                <div class="text-xl font-bold text-gray-700 dark:text-gray-200 transition-all duration-300"
+                                    id="out-pipeline">0
+                                    €</div>
+                                <div class="text-[10px] text-gray-400 dark:text-gray-300 mt-1 uppercase font-semibold">
+                                    Tot. Pipe</div>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Card 3 -->
-                <div
-                    class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-center hover:scale-105 transition-transform duration-300">
-                    <div class="flex items-center text-gray-500 mb-2">
-                        <span class="text-xs font-bold uppercase tracking-wider">Nuovi Clienti</span>
-                        <div class="relative flex items-center tooltip-group cursor-help ml-2">
-                            <svg class="w-4 h-4 text-gray-400 hover:text-emerald-500 transition-colors"
-                                fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd"
-                                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z"
-                                    clip-rule="evenodd"></path>
-                            </svg>
-                            <div
-                                class="tooltip-content absolute bottom-full left-1/2 mb-2 px-3 py-2 text-xs font-medium text-white bg-gray-800 rounded-lg whitespace-nowrap z-10 shadow-lg">
-                                Demo * % Chiusura
+                    <!-- Card 3 -->
+                    <div
+                        class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-200 flex flex-col justify-center hover:scale-105 transition-transform duration-300">
+                        <div class="flex items-center text-gray-500 dark:text-gray-400 mb-2">
+                            <span class="text-xs font-bold uppercase tracking-wider">Nuovi Clienti</span>
+                            <div class="relative flex items-center tooltip-group cursor-help ml-2">
+                                <svg class="w-4 h-4 text-gray-400 dark:text-gray-400 hover:text-emerald-500 dark:hover:text-emerald-400 transition-colors"
+                                    fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z"
+                                        clip-rule="evenodd"></path>
+                                </svg>
                                 <div
-                                    class="absolute w-2 h-2 bg-gray-800 rotate-45 -bottom-1 left-1/2 transform -translate-x-1/2">
+                                    class="tooltip-content absolute bottom-full left-1/2 mb-2 px-3 py-2 text-xs font-medium text-white bg-gray-800 rounded-lg whitespace-nowrap z-10 shadow-lg">
+                                    Demo * % Chiusura
+                                    <div
+                                        class="absolute w-2 h-2 bg-gray-800 rotate-45 -bottom-1 left-1/2 transform -translate-x-1/2">
+                                    </div>
                                 </div>
                             </div>
                         </div>
+                        <div class="text-4xl font-extrabold text-gray-900 dark:text-white transition-all duration-300"
+                            id="out-clienti">
+                            0
+                        </div>
                     </div>
-                    <div class="text-4xl font-extrabold text-gray-900 transition-all duration-300" id="out-clienti">0
-                    </div>
-                </div>
 
-                <!-- Card 4 -->
-                <div
-                    class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-center hover:scale-105 transition-transform duration-300">
-                    <div class="flex items-center text-gray-500 mb-2">
-                        <span class="text-xs font-bold uppercase tracking-wider">Costo Acq. Cliente (CAC)</span>
-                        <div class="relative flex items-center tooltip-group cursor-help ml-2 tooltip-right-edge">
-                            <svg class="w-4 h-4 text-gray-400 hover:text-emerald-500 transition-colors"
-                                fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd"
-                                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z"
-                                    clip-rule="evenodd"></path>
-                            </svg>
-                            <div
-                                class="tooltip-content absolute bottom-full left-1/2 mb-2 px-3 py-2 text-xs font-medium text-white bg-gray-800 rounded-lg whitespace-nowrap z-10 shadow-lg">
-                                Budget / Nuovi Clienti
+                    <!-- Card 4 -->
+                    <div
+                        class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-200 flex flex-col justify-center hover:scale-105 transition-transform duration-300">
+                        <div class="flex items-center text-gray-500 dark:text-gray-400 mb-2">
+                            <span class="text-xs font-bold uppercase tracking-wider">Costo Acq. Cliente (CAC)</span>
+                            <div class="relative flex items-center tooltip-group cursor-help ml-2 tooltip-right-edge">
+                                <svg class="w-4 h-4 text-gray-400 dark:text-gray-400 hover:text-emerald-500 dark:hover:text-emerald-400 transition-colors"
+                                    fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z"
+                                        clip-rule="evenodd"></path>
+                                </svg>
                                 <div
-                                    class="absolute w-2 h-2 bg-gray-800 rotate-45 -bottom-1 left-1/2 transform -translate-x-1/2">
+                                    class="tooltip-content absolute bottom-full left-1/2 mb-2 px-3 py-2 text-xs font-medium text-white bg-gray-800 rounded-lg whitespace-nowrap z-10 shadow-lg">
+                                    Budget / Nuovi Clienti
+                                    <div
+                                        class="absolute w-2 h-2 bg-gray-800 rotate-45 -bottom-1 left-1/2 transform -translate-x-1/2">
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="text-4xl font-extrabold text-gray-900 transition-all duration-300" id="out-cac">0 €
-                    </div>
-                </div>
-
-                <!-- Card 5 (ROI - 2 Colonne) -->
-                <div
-                    class="bg-white p-5 rounded-xl shadow-md border-2 border-emerald-100 sm:col-span-2 flex flex-col justify-center bg-gradient-to-br from-white to-gray-50/50 hover:scale-105 transition-transform duration-300">
-                    <div class="flex items-center mb-2">
-                        <span class="text-sm font-bold uppercase tracking-widest text-emerald-600">ROI Previsto (1°
-                            Anno)</span>
-                        <div class="relative flex items-center tooltip-group cursor-help ml-2">
-                            <svg class="w-5 h-5 text-emerald-400 hover:text-emerald-600 transition-colors"
-                                fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd"
-                                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z"
-                                    clip-rule="evenodd"></path>
-                            </svg>
-                            <div
-                                class="tooltip-content absolute bottom-full left-1/2 mb-3 px-3 py-2 text-xs font-medium text-white bg-gray-800 rounded-lg whitespace-nowrap z-10 shadow-lg">
-                                ((Fatturato - Budget) / Budget) * 100
-                                <div
-                                    class="absolute w-2 h-2 bg-gray-800 rotate-45 -bottom-1 left-1/2 transform -translate-x-1/2">
-                                </div>
-                            </div>
+                        <div class="text-4xl font-extrabold text-gray-900 dark:text-white transition-all duration-300"
+                            id="out-cac">0 €
                         </div>
                     </div>
-                    <div class="text-6xl font-black tracking-tighter transition-all duration-300" id="out-roi">0%</div>
-                    <div class="mt-2 text-sm text-gray-500 font-medium" id="out-breakeven"></div>
-                </div>
 
-                <!-- GRAFICO CHART.JS -->
-                <div
-                    class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 sm:col-span-2 hover:scale-[1.01] transition-transform duration-300">
-                    <div class="relative w-full h-64">
-                        <canvas id="roiChart"></canvas>
+                    <!-- Card 5 (ROI - 2 Colonne) -->
+                    <div
+                        class="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-md border-2 border-emerald-100 dark:border-emerald-800 transition-colors duration-200 sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6 bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-800 dark:to-gray-900/50 hover:scale-105 transition-transform duration-300">
+
+                        <!-- ROI 1° Anno -->
+                        <div class="flex flex-col justify-center sm:border-r border-gray-200 sm:pr-4">
+                            <div class="flex items-center mb-2">
+                                <span class="text-sm font-bold uppercase tracking-widest text-emerald-600">ROI Previsto
+                                    (1°
+                                    Anno)</span>
+                                <div class="relative flex items-center tooltip-group cursor-help ml-2">
+                                    <svg class="w-5 h-5 text-emerald-400 hover:text-emerald-600 transition-colors"
+                                        fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd"
+                                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z"
+                                            clip-rule="evenodd"></path>
+                                    </svg>
+                                    <div
+                                        class="tooltip-content absolute bottom-full left-1/2 mb-3 px-3 py-2 text-xs font-medium text-white bg-gray-800 rounded-lg whitespace-nowrap z-10 shadow-lg">
+                                        ((Fatturato - Budget) / Budget) * 100
+                                        <div
+                                            class="absolute w-2 h-2 bg-gray-800 rotate-45 -bottom-1 left-1/2 transform -translate-x-1/2">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-5xl lg:text-6xl font-black tracking-tighter transition-all duration-300"
+                                id="out-roi">0%</div>
+                            <div class="mt-2 text-sm text-gray-500 font-medium" id="out-breakeven"></div>
+                        </div>
+
+                        <!-- ROI LTV -->
+                        <div class="flex flex-col justify-center sm:pl-2">
+                            <div class="flex items-center mb-2">
+                                <span class="text-sm font-bold uppercase tracking-widest text-emerald-600">ROI LTV
+                                    (Projected)</span>
+                                <div
+                                    class="relative flex items-center tooltip-group cursor-help ml-2 tooltip-right-edge">
+                                    <svg class="w-5 h-5 text-emerald-400 hover:text-emerald-600 transition-colors"
+                                        fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd"
+                                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z"
+                                            clip-rule="evenodd"></path>
+                                    </svg>
+                                    <div
+                                        class="tooltip-content absolute bottom-full left-1/2 mb-3 px-3 py-2 text-xs font-medium text-white bg-gray-800 rounded-lg whitespace-nowrap z-10 shadow-lg">
+                                        ((((Nuovi Clienti * ARR) * Durata Anni) - Budget) / Budget) * 100
+                                        <div
+                                            class="absolute w-2 h-2 bg-gray-800 rotate-45 -bottom-1 left-1/2 transform -translate-x-1/2">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-5xl lg:text-6xl font-black tracking-tighter transition-all duration-300"
+                                id="out-roi-ltv">0%</div>
+                        </div>
                     </div>
+
+                    <!-- GRAFICO CHART.JS -->
+                    <div
+                        class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-200 sm:col-span-2 hover:scale-[1.01] transition-transform duration-300">
+                        <div class="relative w-full h-64">
+                            <canvas id="roiChart"></canvas>
+                        </div>
+                    </div>
+
                 </div>
 
+                <!-- BOTTONI AZIONE -->
+                <div class="mt-4 flex flex-wrap justify-end items-center gap-4">
+                    <button onclick="resetApp()"
+                        class="text-gray-400 hover:text-gray-600 text-xs font-bold mr-auto transition-colors">
+                        Reset Dati
+                    </button>
+                    <button id="btn-excel" onclick="downloadExcel()"
+                        class="flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg shadow-md transition-all active:scale-95 border border-emerald-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4">
+                            </path>
+                        </svg>
+                        <span>Scarica Excel (.xlsx)</span>
+                    </button>
+                    <button id="btn-copy" onclick="copyReport()"
+                        class="flex items-center gap-2 px-6 py-3 bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold rounded-lg shadow-md transition-all active:scale-95 border border-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3">
+                            </path>
+                        </svg>
+                        <span id="btn-copy-text">Copia Report per Slack</span>
+                    </button>
+                </div>
             </div>
 
-            <!-- BOTTONE SLACK -->
-            <div class="mt-4 flex justify-end items-center">
-                <button onclick="resetApp()"
-                    class="text-gray-400 hover:text-gray-600 text-xs font-bold mr-4 transition-colors">
-                    Reset Dati
-                </button>
-                <button id="btn-copy" onclick="copyReport()"
-                    class="flex items-center gap-2 px-6 py-3 bg-gray-900 hover:bg-gray-800 text-white text-sm font-semibold rounded-lg shadow-md transition-all active:scale-95 border border-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3">
-                        </path>
-                    </svg>
-                    <span id="btn-copy-text">Copia Report per Slack</span>
-                </button>
+        </div>
+
+        <!-- TAB SCENARI -->
+        <div id="tab-scenari" class="hidden flex-col lg:flex-row gap-8">
+            <!-- Colonna Sinistra (Salvataggio) -->
+            <div class="w-full lg:w-4/12 flex flex-col gap-6">
+                <div
+                    class="bg-white dark:bg-gray-800 p-6 md:p-8 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-200">
+                    <h2
+                        class="text-lg font-bold text-gray-800 dark:text-white uppercase tracking-wide border-b border-gray-100 dark:border-gray-700 pb-2 mb-4">
+                        Salva Scenari</h2>
+                    <p class="text-sm text-gray-600 dark:text-white mb-6">Salva la configurazione attuale del simulatore
+                        per confrontare
+                        due ipotesi (es. evento grande vs evento piccolo).</p>
+                    <div class="flex flex-col gap-4">
+                        <button onclick="saveScenario('A')"
+                            class="w-full py-3 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold rounded-lg border border-blue-200 transition-colors flex items-center justify-center gap-2">
+                            Salva come Scenario A
+                        </button>
+                        <button onclick="saveScenario('B')"
+                            class="w-full py-3 bg-purple-50 hover:bg-purple-100 text-purple-700 font-semibold rounded-lg border border-purple-200 transition-colors flex items-center justify-center gap-2">
+                            Salva come Scenario B
+                        </button>
+                        <button onclick="resetScenarios()"
+                            class="w-full text-red-500 hover:bg-red-50 hover:text-red-600 py-2 mt-2 text-sm font-semibold rounded-lg transition-colors flex items-center justify-center gap-2">
+                            Svuota Scenari
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Colonna Destra (Confronto) -->
+            <div class="w-full lg:w-8/12 flex flex-col gap-6">
+                <div
+                    class="bg-white dark:bg-gray-800 p-6 md:p-8 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-200">
+                    <h2
+                        class="text-lg font-bold text-gray-800 dark:text-white uppercase tracking-wide border-b border-gray-100 dark:border-gray-700 pb-2 mb-4">
+                        Confronto</h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse min-w-max">
+                            <thead>
+                                <tr>
+                                    <th
+                                        class="py-3 px-4 bg-gray-50 dark:bg-gray-800 font-bold text-gray-700 dark:text-gray-200 border-b border-gray-200 dark:border-gray-600">
+                                        Metrica</th>
+                                    <th
+                                        class="py-3 px-4 bg-blue-50 dark:bg-blue-900/20 font-bold text-blue-800 dark:text-blue-300 border-b border-blue-100 dark:border-blue-800 w-1/3 text-right">
+                                        Scenario A</th>
+                                    <th
+                                        class="py-3 px-4 bg-purple-50 dark:bg-purple-900/20 font-bold text-purple-800 dark:text-purple-300 border-b border-purple-100 dark:border-purple-800 w-1/3 text-right">
+                                        Scenario B</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr
+                                    class="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                    <td class="py-4 px-4 font-semibold text-gray-800 dark:text-gray-200">Budget Totale
+                                    </td>
+                                    <td id="td-budget-a"
+                                        class="py-4 px-4 text-gray-600 dark:text-gray-300 font-bold text-right">-</td>
+                                    <td id="td-budget-b"
+                                        class="py-4 px-4 text-gray-600 dark:text-gray-300 font-bold text-right">-</td>
+                                </tr>
+                                <tr
+                                    class="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                    <td class="py-4 px-4 font-semibold text-gray-800 dark:text-gray-200">Pipeline
+                                        Generata</td>
+                                    <td id="td-pipeline-a"
+                                        class="py-4 px-4 text-gray-600 dark:text-gray-300 font-bold text-right">-</td>
+                                    <td id="td-pipeline-b"
+                                        class="py-4 px-4 text-gray-600 dark:text-gray-300 font-bold text-right">-</td>
+                                </tr>
+                                <tr
+                                    class="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                    <td class="py-4 px-4 font-semibold text-gray-800 dark:text-gray-200">Nuovi Clienti
+                                    </td>
+                                    <td id="td-clienti-a"
+                                        class="py-4 px-4 text-gray-600 dark:text-gray-300 font-bold text-right">-</td>
+                                    <td id="td-clienti-b"
+                                        class="py-4 px-4 text-gray-600 dark:text-gray-300 font-bold text-right">-</td>
+                                </tr>
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="py-4 px-4 font-semibold text-gray-800 dark:text-gray-200">ROI 1° Anno
+                                    </td>
+                                    <td id="td-roi-a"
+                                        class="py-4 px-4 text-gray-600 dark:text-gray-300 font-black text-right text-lg">
+                                        -
+                                    </td>
+                                    <td id="td-roi-b"
+                                        class="py-4 px-4 text-gray-600 dark:text-gray-300 font-black text-right text-lg">
+                                        -
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
 
     </main>
 
     <script>
-        // Array dei parametri per semplificare l'assegnazione degli eventi
-        const params = ['budget', 'invitati', 'presenza', 'demo', 'chiusura', 'arr'];
+        // Modalità Scura
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            html.classList.toggle('dark');
+            const isDark = html.classList.contains('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
 
-        // Helper per estrarre numeri puri dai campi con valuta formattata
+            // Aggiorna Chart.js
+            if (typeof roiChart !== 'undefined' && roiChart) {
+                const color = isDark ? '#E5E7EB' : '#374151'; // text-gray-200 vs text-gray-700
+                roiChart.options.scales.x.ticks.color = color;
+                roiChart.options.scales.y.ticks.color = color;
+                roiChart.update();
+            }
+        }
+
+        // Gestione Tab Principali
+        function switchMainTab(tabId) {
+            const btnSim = document.getElementById('tab-btn-simulator');
+            const btnSce = document.getElementById('tab-btn-scenari');
+            const tabSim = document.getElementById('tab-simulator');
+            const tabSce = document.getElementById('tab-scenari');
+
+            if (tabId === 'simulator') {
+                btnSim.className = "pb-3 text-sm font-bold text-gray-900 dark:text-white border-b-4 border-emerald-500 transition-colors";
+                btnSce.className = "pb-3 text-sm font-bold text-gray-500 dark:text-gray-400 border-b-4 border-transparent hover:text-gray-700 dark:hover:text-gray-300 transition-colors";
+                tabSim.classList.remove('hidden');
+                tabSim.classList.add('flex');
+                tabSce.classList.add('hidden');
+                tabSce.classList.remove('flex');
+            } else {
+                btnSce.className = "pb-3 text-sm font-bold text-gray-900 dark:text-white border-b-4 border-emerald-500 transition-colors";
+                btnSim.className = "pb-3 text-sm font-bold text-gray-500 dark:text-gray-400 border-b-4 border-transparent hover:text-gray-700 dark:hover:text-gray-300 transition-colors";
+                tabSce.classList.remove('hidden');
+                tabSce.classList.add('flex');
+                tabSim.classList.add('hidden');
+                tabSim.classList.remove('flex');
+            }
+        }
+
+        // Laboratorio Scenari
+        let scenarioA = null;
+        let scenarioB = null;
+
+        function saveScenario(scen) {
+            // Clona lo stato attuale
+            const currentScenario = JSON.parse(JSON.stringify(state));
+
+            if (scen === 'A') {
+                scenarioA = currentScenario;
+                localStorage.setItem('roiScenarioA', JSON.stringify(scenarioA));
+            } else {
+                scenarioB = currentScenario;
+                localStorage.setItem('roiScenarioB', JSON.stringify(scenarioB));
+            }
+            updateScenarioTable();
+        }
+
+        function resetScenarios() {
+            scenarioA = null;
+            scenarioB = null;
+            localStorage.removeItem('roiScenarioA');
+            localStorage.removeItem('roiScenarioB');
+            updateScenarioTable();
+        }
+
+        function updateScenarioTable() {
+            const formatEur = val => val.toLocaleString('it-IT') + ' €';
+            const formatNum = val => val.toLocaleString('it-IT');
+            const formatPerc = val => val.toLocaleString('it-IT', { maximumFractionDigits: 1 }) + '%';
+
+            // Helper per resettare una colonna
+            const resetCol = (col) => {
+                const suffix = col.toLowerCase();
+                document.getElementById(`td-budget-${suffix}`).innerText = '-';
+                document.getElementById(`td-budget-${suffix}`).className = "py-4 px-4 text-gray-600 dark:text-gray-300 font-bold text-right";
+                document.getElementById(`td-pipeline-${suffix}`).innerText = '-';
+                document.getElementById(`td-pipeline-${suffix}`).className = "py-4 px-4 text-gray-600 dark:text-gray-300 font-bold text-right";
+                document.getElementById(`td-clienti-${suffix}`).innerText = '-';
+                document.getElementById(`td-clienti-${suffix}`).className = "py-4 px-4 text-gray-600 dark:text-gray-300 font-bold text-right";
+                const roi = document.getElementById(`td-roi-${suffix}`);
+                roi.innerText = '-';
+                roi.className = "py-4 px-4 text-gray-600 dark:text-gray-300 font-black text-right text-lg";
+            };
+
+            // Aggiorna Scenario A
+            if (scenarioA) {
+                document.getElementById('td-budget-a').innerText = formatEur(scenarioA.budget);
+                document.getElementById('td-budget-a').className = "py-4 px-4 text-blue-700 dark:text-blue-400 font-bold text-right";
+                document.getElementById('td-pipeline-a').innerText = formatEur(scenarioA.pipeline);
+                document.getElementById('td-pipeline-a').className = "py-4 px-4 text-blue-700 dark:text-blue-400 font-bold text-right";
+                document.getElementById('td-clienti-a').innerText = formatNum(scenarioA.nuoviClienti);
+                document.getElementById('td-clienti-a').className = "py-4 px-4 text-blue-700 dark:text-blue-400 font-bold text-right";
+
+                const roiA = document.getElementById('td-roi-a');
+                roiA.innerText = formatPerc(scenarioA.roi);
+                roiA.className = "py-4 px-4 font-black text-right text-lg " + (scenarioA.roi > 0 ? 'text-emerald-600' : 'text-red-500');
+            } else {
+                resetCol('A');
+            }
+
+            // Aggiorna Scenario B
+            if (scenarioB) {
+                document.getElementById('td-budget-b').innerText = formatEur(scenarioB.budget);
+                document.getElementById('td-budget-b').className = "py-4 px-4 text-purple-700 dark:text-purple-400 font-bold text-right";
+                document.getElementById('td-pipeline-b').innerText = formatEur(scenarioB.pipeline);
+                document.getElementById('td-pipeline-b').className = "py-4 px-4 text-purple-700 dark:text-purple-400 font-bold text-right";
+                document.getElementById('td-clienti-b').innerText = formatNum(scenarioB.nuoviClienti);
+                document.getElementById('td-clienti-b').className = "py-4 px-4 text-purple-700 dark:text-purple-400 font-bold text-right";
+
+                const roiB = document.getElementById('td-roi-b');
+                roiB.innerText = formatPerc(scenarioB.roi);
+                roiB.className = "py-4 px-4 font-black text-right text-lg " + (scenarioB.roi > 0 ? 'text-emerald-600' : 'text-red-500');
+            } else {
+                resetCol('B');
+            }
+        }
+
+        // Modalità Budget
+        let budgetMode = 'rapido';
+
+        function setBudgetMode(mode) {
+            budgetMode = mode;
+            const btnRapido = document.getElementById('btn-budget-rapido');
+            const btnDettagliato = document.getElementById('btn-budget-dettagliato');
+            const contRapido = document.getElementById('container-budget-rapido');
+            const contDettagliato = document.getElementById('container-budget-dettagliato');
+
+            if (mode === 'rapido') {
+                btnRapido.className = "flex-1 py-1.5 text-sm font-semibold rounded-md bg-white dark:bg-gray-600 shadow-sm text-gray-800 dark:text-white transition-all";
+                btnDettagliato.className = "flex-1 py-1.5 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-200 dark:hover:text-gray-100 transition-all";
+                contRapido.classList.remove('hidden');
+                contRapido.classList.add('flex');
+                contDettagliato.classList.add('hidden');
+                contDettagliato.classList.remove('flex');
+            } else {
+                btnDettagliato.className = "flex-1 py-1.5 text-sm font-semibold rounded-md bg-white dark:bg-gray-600 shadow-sm text-gray-800 dark:text-white transition-all";
+                btnRapido.className = "flex-1 py-1.5 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-200 dark:hover:text-gray-100 transition-all";
+                contDettagliato.classList.remove('hidden');
+                contDettagliato.classList.add('flex');
+                contRapido.classList.add('hidden');
+                contRapido.classList.remove('flex');
+            }
+            calculate();
+        }
+
+        // Array dei parametri per semplificare l'assegnazione degli eventi
+        const params = ['budget', 'invitati', 'presenza', 'demo', 'chiusura', 'arr', 'anni'];
+
+        // Helper per estrarre numeri puri dai campi con valuta formattata (formato europeo)
         const parseEuro = (val) => {
             if (typeof val === 'number') return val;
-            const parsed = parseFloat(val.replace(/[^\d]/g, ''));
+            // Rimuove il simbolo € e gli spazi, poi tratta il formato europeo:
+            // rimuove i punti delle migliaia e converte la virgola decimale in punto
+            const cleaned = String(val)
+                .replace(/€/g, '')
+                .trim()
+                .replace(/\./g, '')   // rimuove separatori migliaia (punti)
+                .replace(/,/g, '.');  // converte virgola decimale in punto
+            const parsed = parseFloat(cleaned);
             return isNaN(parsed) ? 0 : parsed;
         };
 
@@ -390,15 +791,91 @@
             return parseEuro(val).toLocaleString('it-IT') + ' €';
         };
 
+        let budgetItems = [
+            { id: 1, name: "Spazio & Stand", cost: 2000 },
+            { id: 2, name: "Marketing & Ads", cost: 1000 },
+            { id: 3, name: "Staff & Trasferte", cost: 1000 }
+        ];
+        let nextBudgetItemId = 4;
+
         // Oggetto di stato per mantenere i dati pronti per il report Slack
         const state = {
+            budgetMode: 'rapido',
+            budgetItems: [],
             budget: 0,
             partecipantiReali: 0,
             pipeline: 0,
             nuoviClienti: 0,
             cac: 0,
-            roi: 0
+            roi: 0,
+            anni: 0,
+            ltv: 0,
+            roiLtv: 0
         };
+
+        function renderBudgetItems() {
+            const listEl = document.getElementById('budget-items-list');
+            if (!listEl) return;
+            listEl.innerHTML = '';
+            budgetItems.forEach(item => {
+                const row = document.createElement('div');
+                row.className = "flex items-center gap-2";
+
+                // Costruzione via DOM (XSS-safe: nessuna interpolazione di dati utente in innerHTML)
+                const nameInput = document.createElement('input');
+                nameInput.type = 'text';
+                nameInput.value = item.name;   // assegnato via .value, non via innerHTML
+                nameInput.className = 'flex-1 px-2 py-1.5 text-sm font-medium border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-400';
+                nameInput.placeholder = 'Nome voce';
+                nameInput.addEventListener('input', function () { updateBudgetItemName(item.id, this.value); });
+
+                const costInput = document.createElement('input');
+                costInput.type = 'text';
+                costInput.inputMode = 'numeric';
+                costInput.value = formatEuroInput(item.cost.toString());
+                costInput.className = 'w-28 px-2 py-1.5 text-sm font-bold text-right border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-400';
+                costInput.addEventListener('focus', function () { this.value = parseEuro(this.value); this.select(); });
+                costInput.addEventListener('blur', function () { updateBudgetItemCost(item.id, this.value); this.value = formatEuroInput(this.value); });
+
+                const delBtn = document.createElement('button');
+                delBtn.type = 'button';
+                delBtn.title = 'Rimuovi';
+                delBtn.className = 'text-gray-400 hover:text-red-500 transition-colors p-1';
+                delBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+                delBtn.addEventListener('click', function () { removeBudgetItem(item.id); });
+
+                row.appendChild(nameInput);
+                row.appendChild(costInput);
+                row.appendChild(delBtn);
+                listEl.appendChild(row);
+            });
+        }
+
+        function addBudgetItem() {
+            budgetItems.push({ id: nextBudgetItemId++, name: "Nuova voce", cost: 500 });
+            renderBudgetItems();
+            calculate();
+        }
+
+        function removeBudgetItem(id) {
+            budgetItems = budgetItems.filter(item => item.id !== id);
+            renderBudgetItems();
+            calculate();
+        }
+
+        function updateBudgetItemName(id, newName) {
+            const item = budgetItems.find(i => i.id === id);
+            if (item) item.name = newName;
+            calculate();
+        }
+
+        function updateBudgetItemCost(id, newCostStr) {
+            const item = budgetItems.find(i => i.id === id);
+            if (item) {
+                item.cost = parseEuro(newCostStr.toString()) || 0;
+            }
+            calculate();
+        }
 
         // Variabile globale per il grafico
         let roiChart;
@@ -442,24 +919,39 @@
             }
         });
 
+
+
         // Funzione Core per il calcolo e il rendering
         function calculate() {
             // Estrazione valori esatti in floating point (con parsing per le valute)
-            const budget = parseEuro(document.getElementById('input-budget').value) || 0;
+            let budget = 0;
+            if (budgetMode === 'rapido') {
+                budget = parseEuro(document.getElementById('input-budget').value) || 0;
+            } else {
+                budget = budgetItems.reduce((acc, item) => acc + item.cost, 0);
+                document.getElementById('label-budget-totale').innerText = budget.toLocaleString('it-IT') + ' €';
+            }
+
             const invitati = parseFloat(document.getElementById('input-invitati').value) || 0;
             const presenza = parseFloat(document.getElementById('input-presenza').value) || 0;
             const demoConv = parseFloat(document.getElementById('input-demo').value) || 0;
             const chiusura = parseFloat(document.getElementById('input-chiusura').value) || 0;
             const arr = parseEuro(document.getElementById('input-arr').value) || 0;
+            const anni = parseFloat(document.getElementById('input-anni').value) || 0;
 
             // Logica e Matematica (Senza arrotondamenti intermedi per massima precisione)
-            const partecipantiReali = invitati * (presenza / 100);
+            // Cap a 100 per le percentuali (protezione da input manuali oltre il limite dello slider)
+            const presenzaSafe = Math.min(presenza, 100);
+            const demoConvSafe = Math.min(demoConv, 100);
+            const chiusuraSafe = Math.min(chiusura, 100);
+
+            const partecipantiReali = invitati * (presenzaSafe / 100);
             const cpa = partecipantiReali > 0 ? (budget / partecipantiReali) : 0;
 
-            const demo = partecipantiReali * (demoConv / 100);
+            const demo = partecipantiReali * (demoConvSafe / 100);
             const pipeline = demo * arr;
 
-            const nuoviClienti = demo * (chiusura / 100);
+            const nuoviClienti = demo * (chiusuraSafe / 100);
 
             // Arrotondamento umano rigoroso (Math.round)
             const partecipantiRounded = Math.round(partecipantiReali);
@@ -472,13 +964,21 @@
             const fatturato = clientiRounded * arr;
             const roi = budget > 0 ? (((fatturato - budget) / budget) * 100) : 0;
 
+            const ltv = fatturato * anni;
+            const roiLtv = budget > 0 ? (((ltv - budget) / budget) * 100) : 0;
+
             // Aggiornamento dello Stato
+            state.budgetMode = budgetMode;
+            state.budgetItems = [...budgetItems];
             state.budget = budget;
             state.partecipantiReali = partecipantiReali;
             state.pipeline = pipeline;
             state.nuoviClienti = clientiRounded;
             state.cac = cac;
             state.roi = roi;
+            state.anni = anni;
+            state.ltv = ltv;
+            state.roiLtv = roiLtv;
 
             // Formattatori visuali (toLocaleString it-IT e €)
             const fmtNum = (n) => n.toLocaleString('it-IT', { maximumFractionDigits: 1 });
@@ -507,7 +1007,12 @@
             roiEl.innerText = `${sign}${fmtNum(roi)}%`;
 
             // Classi CSS condizionali con transizione
-            roiEl.className = `text-6xl font-black tracking-tighter transition-colors ${roi > 0 ? 'text-emerald-500' : (roi < 0 ? 'text-red-500' : 'text-gray-900')}`;
+            roiEl.className = `text-5xl lg:text-6xl font-black tracking-tighter transition-colors ${roi > 0 ? 'text-emerald-500' : (roi < 0 ? 'text-red-500' : 'text-gray-900')}`;
+
+            const roiLtvEl = document.getElementById('out-roi-ltv');
+            const signLtv = roiLtv > 0 ? '+' : '';
+            roiLtvEl.innerText = `${signLtv}${fmtNum(roiLtv)}%`;
+            roiLtvEl.className = `text-5xl lg:text-6xl font-black tracking-tighter transition-colors ${roiLtv > 0 ? 'text-emerald-500' : (roiLtv < 0 ? 'text-red-500' : 'text-gray-900 dark:text-white')}`;
 
             // Calcolo e visualizzazione Break-Even
             const breakEven = arr > 0 ? Math.ceil(budget / arr) : 0;
@@ -519,7 +1024,10 @@
             }
 
             // Persistenza stato (URL + LocalStorage)
-            updateState({ budget, invitati, presenza, demo: demoConv, chiusura, arr });
+            updateState({
+                budgetMode, budget, budgetItems,
+                invitati, presenza, demo: demoConv, chiusura, arr, anni
+            });
 
             // Aggiorna Grafico Chart.js
             if (typeof roiChart !== 'undefined' && roiChart) {
@@ -531,6 +1039,8 @@
         // Funzione di Reset
         function resetApp() {
             localStorage.removeItem('roiSimulatorState');
+            localStorage.removeItem('roiScenarioA');
+            localStorage.removeItem('roiScenarioB');
             window.location.href = window.location.pathname;
         }
 
@@ -567,6 +1077,60 @@
             });
         }
 
+        function downloadExcel() {
+            const date = new Date().toISOString().split('T')[0];
+
+            const inputInvitati = parseFloat(document.getElementById('input-invitati').value) || 0;
+            const inputPresenza = parseFloat(document.getElementById('input-presenza').value) || 0;
+            const inputDemo = parseFloat(document.getElementById('input-demo').value) || 0;
+            const inputChiusura = parseFloat(document.getElementById('input-chiusura').value) || 0;
+            const inputArr = parseEuro(document.getElementById('input-arr').value) || 0;
+            const cpa = state.partecipantiReali > 0 ? state.budget / state.partecipantiReali : 0;
+            const demoGenerate = state.partecipantiReali * (inputDemo / 100);
+
+            const ws_data = [
+                ["Metrica", "Valore"],
+                ["Budget Evento Totale (EUR)", state.budget]
+            ];
+
+            if (budgetMode === 'dettagliato') {
+                budgetItems.forEach(item => {
+                    ws_data.push([`- ${item.name} (EUR)`, item.cost]);
+                });
+            }
+
+            ws_data.push(
+                ["Invitati Totali", inputInvitati],
+                ["Tasso di Presenza Effettiva (%)", inputPresenza],
+                ["Conversione in Demo (%)", inputDemo],
+                ["Tasso di Chiusura post-Demo (%)", inputChiusura],
+                ["Val. Medio Contratto ARR (EUR)", inputArr],
+                ["Durata Media Cliente (Anni)", state.anni],
+                ["Partecipanti Reali", state.partecipantiReali],
+                ["Costo per Acquisizione (CPA - EUR)", cpa],
+                ["Demo Generate", demoGenerate],
+                ["Pipeline Generata (EUR)", state.pipeline],
+                ["Nuovi Clienti", state.nuoviClienti],
+                ["Costo Acq. Cliente (CAC - EUR)", state.cac],
+                ["ROI 1° Anno (%)", state.roi],
+                ["Lifetime Value LTV (EUR)", state.ltv],
+                ["ROI LTV Projected (%)", state.roiLtv]
+            );
+
+            const ws = XLSX.utils.aoa_to_sheet(ws_data);
+
+            // Stile larghezza colonne
+            ws['!cols'] = [
+                { wch: 40 }, // Metrica
+                { wch: 15 }  // Valore
+            ];
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Report ROI");
+
+            XLSX.writeFile(wb, `report_evento.xlsx`);
+        }
+
         // Persistenza Dati (con debounce per evitare limiti history API su browser come Safari)
         let historyDebounce;
         function updateState(paramsObj) {
@@ -587,11 +1151,36 @@
         }
 
         function initApp() {
+            // Theme setup
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            }
+
             const urlParams = new URLSearchParams(window.location.search);
             let savedState = null;
             try {
                 savedState = JSON.parse(localStorage.getItem('roiSimulatorState'));
+
+                const savedScenA = localStorage.getItem('roiScenarioA');
+                if (savedScenA) scenarioA = JSON.parse(savedScenA);
+
+                const savedScenB = localStorage.getItem('roiScenarioB');
+                if (savedScenB) scenarioB = JSON.parse(savedScenB);
             } catch (e) { }
+
+            updateScenarioTable();
+
+            // Load budget mode and detail inputs
+            let savedBudgetMode = 'rapido';
+            if (urlParams.has('budgetMode')) savedBudgetMode = urlParams.get('budgetMode');
+            else if (savedState && savedState.budgetMode) savedBudgetMode = savedState.budgetMode;
+
+            if (savedState && savedState.budgetItems && savedState.budgetItems.length > 0) {
+                budgetItems = savedState.budgetItems;
+                nextBudgetItemId = Math.max(...budgetItems.map(i => i.id)) + 1;
+            }
+            renderBudgetItems();
 
             params.forEach(id => {
                 const slider = document.getElementById(`slider-${id}`);
@@ -649,9 +1238,15 @@
                         }
                     },
                     scales: {
+                        x: {
+                            ticks: {
+                                color: document.documentElement.classList.contains('dark') ? '#E5E7EB' : '#374151'
+                            }
+                        },
                         y: {
                             beginAtZero: true,
                             ticks: {
+                                color: document.documentElement.classList.contains('dark') ? '#E5E7EB' : '#374151',
                                 callback: function (value) {
                                     if (value >= 1000) return (value / 1000) + 'k €';
                                     return value + ' €';
@@ -662,7 +1257,7 @@
                 }
             });
 
-            calculate();
+            setBudgetMode(savedBudgetMode);
         }
 
         // Inizializzazione al caricamento della pagina
